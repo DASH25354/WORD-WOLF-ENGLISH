@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Wordwolf - JHS Edition</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: 'Comic Sans MS', 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            text-align: center;
+            padding: 10px;
+            margin: 0;
+        }
+        .container {
+            max-width: 650px;
+            margin: 20px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-top: 8px solid #4ecdc4;
+        }
+        h1 { color: #ff6b6b; font-size: 2.5em; margin-bottom: 5px; }
+        h2 { color: #4a4e69; font-size: 1.6em; }
+        p { font-size: 1.1em; line-height: 1.4; }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            text-align: left;
+            flex: 1;
+            min-width: 250px;
+        }
+        label {
+            font-weight: bold;
+            font-size: 1.05em;
+            color: #4a4e69;
+            display: block;
+            margin-bottom: 5px;
+        }
+        select {
+            width: 100%;
+            font-size: 1.1em;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #cbd5e1;
+            background-color: #fff;
+            cursor: pointer;
+            outline: none;
+        }
+        select:focus { border-color: #4ecdc4; }
+        button {
+            font-size: 1.2em;
+            padding: 12px 25px;
+            margin: 15px 5px;
+            border-radius: 10px;
+            border: none;
+            background-color: #4ecdc4;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(78, 205, 196, 0.3);
+            transition: all 0.2s;
+        }
+        button:hover {
+            background-color: #45b7aa;
+            transform: translateY(-2px);
+        }
+        button.secondary { background-color: #ff6b6b; box-shadow: 0 4px 6px rgba(255, 107, 107, 0.3); }
+        button.secondary:hover { background-color: #e65c5c; }
+        button.roulette-btn { background-color: #fca311; box-shadow: 0 4px 6px rgba(252, 163, 17, 0.3); width: 100%; margin-top: 10px;}
+        button.roulette-btn:hover { background-color: #e59400; }
+        
+        .screen { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .word-display {
+            font-size: 3.5em;
+            font-weight: bold;
+            color: #e63946;
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #fff0f0;
+            border-radius: 15px;
+            border: 3px dashed #e63946;
+        }
+        .timer-display {
+            font-size: 4em;
+            font-weight: bold;
+            color: #2b2d42;
+            margin: 15px 0;
+            font-family: monospace;
+            background-color: #f1f5f9;
+            padding: 10px 30px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+        .timer-warning { color: #e63946; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .hint-box, .roulette-box {
+            background-color: #ffe8d6;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: left;
+            border-left: 5px solid #ff9f1c;
+        }
+        .roulette-box { background-color: #e0f7fa; border-left: 5px solid #00bcd4; text-align: center; }
+        .roulette-result { font-size: 1.4em; font-weight: bold; color: #00838f; margin: 15px 0; min-height: 2em;}
+        
+        .result-box {
+            background-color: #f8fafc;
+            border: 2px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: white;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+        .badge-citizen { background-color: #4cbd52; }
+        .badge-wolf { background-color: #e63946; }
+        .status-bar {
+            font-size: 0.9em;
+            color: #64748b;
+            margin-top: 15px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Screen 1: Setup -->
+    <div id="setup-screen" class="screen active">
+        <h1>Wordwolf</h1>
+        <p>JHS English Class Edition</p>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="difficulty">Level (難易度):</label>
+                <select id="difficulty" onchange="updateTopicStats()">
+                    <option value="level1" selected>Level 1 (Basic / JHS 1st-2nd)</option>
+                    <option value="level2">Level 2 (Standard / JHS 2nd-3rd)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="topic">Topic (お題):</label>
+                <select id="topic" onchange="updateTopicStats()">
+                    <option value="1">1. Food & Drink</option>
+                    <option value="2">2. Sports</option>
+                    <option value="3">3. Animals</option>
+                    <option value="4">4. School</option>
+                    <option value="5">5. Places & Facilities</option>
+                    <option value="6">6. Random Topic 🎲</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="players">Players (人数):</label>
+                <select id="players" onchange="updateWolfOptions()">
+                    <option value="3">3 Players</option>
+                    <option value="4" selected>4 Players</option>
+                    <option value="5">5 Players</option>
+                    <option value="6">6 Players</option>
+                    <option value="7">7 Players</option>
+                    <option value="8">8 Players</option>
+                    <option value="9">9 Players</option>
+                    <option value="10">10 Players</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="wolves">Wolves (ウルフの数):</label>
+                <select id="wolves">
+                    <option value="1" selected>1 Wolf</option>
+                    <option value="2">2 Wolves</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="max-width: 100%;">
+            <label for="duration">Discussion Time:</label>
+            <select id="duration">
+                <option value="60">1 Minute</option>
+                <option value="120">2 Minutes</option>
+                <option value="180" selected>3 Minutes</option>
+                <option value="300">5 Minutes</option>
+            </select>
+        </div>
+
+        <button onclick="startGame()" style="width: 100%; padding: 15px; font-size: 1.5em;">Start Game</button>
+        <div id="stock-status" class="status-bar">Available Pairs: Checking...</div>
+    </div>
+
+    <!-- Screen 2: Pass Phone -->
+    <div id="pass-screen" class="screen">
+        <h2 id="player-turn-text">Player 1</h2>
+        <p>Pass the device to this player.<br>Are you ready?</p>
+        <button onclick="showWord()">See My Word</button>
+    </div>
+
+    <!-- Screen 3: Show Word -->
+    <div id="word-screen" class="screen">
+        <h2 id="player-word-title">Player 1, your word is:</h2>
+        <div id="the-word" class="word-display">Word</div>
+        <p>Keep it a secret! Memorize it!</p>
+        <button onclick="nextPlayer()">Hide & Next</button>
+    </div>
+
+    <!-- Screen 4: Discussion -->
+    <div id="discussion-screen" class="screen">
+        <h1>Discussion Time!</h1>
+        <p>Talk in English and find the Wolf!</p>
+        
+        <div id="timer" class="timer-display">03:00</div>
+        
+        <div>
+            <button id="pause-btn" onclick="toggleTimer()">Pause / Resume</button>
+        </div>
+
+        <div class="hint-box">
+            <strong style="color: #d35400;">Helpful Questions:</strong>
+            <ul style="margin: 5px 0 0 20px;">
+                <li>What color is it? Is it big or small?</li>
+                <li>Do you like it? When do you use/eat/see it?</li>
+                <li>Where can you see it? Can we buy it?</li>
+            </ul>
+        </div>
+        <button class="secondary" onclick="confirmResult()" style="width: 100%; margin-top: 20px;">Go to Result</button>
+    </div>
+
+    <!-- Screen 5: Result & Roulette -->
+    <div id="result-screen" class="screen">
+        <h1>Game Result</h1>
+        <h2 id="wolf-result" style="color: #e63946; font-size: 2.2em; margin-bottom: 5px;">The Wolf is...</h2>
+        
+        <div class="result-box" style="text-align: left;">
+            <p><span class="badge badge-citizen">Citizen</span> <strong id="majority-result" style="font-size: 1.4em;"></strong></p>
+            <p><span class="badge badge-wolf">Wolf</span> <strong id="minority-result" style="font-size: 1.4em;"></strong></p>
+        </div>
+        
+        <!-- English Mission Roulette -->
+        <div class="roulette-box">
+            <h3 style="margin-top: 0; color: #006064;">🎯 English Mission Roulette</h3>
+            <p style="font-size: 0.9em; margin-bottom: 10px;">Did the Wolf lose? Give them an English task!</p>
+            <div id="roulette-result" class="roulette-result">Ready to spin?</div>
+            <button class="roulette-btn" onclick="spinRoulette()">Spin the Wheel!</button>
+        </div>
+
+        <button onclick="resetGame()" style="width: 100%; margin-top: 20px;">Play Next Game</button>
+    </div>
+</div>
+
+<script>
+    // --- EXACTLY 50 PAIRS PER CATEGORY PER LEVEL (TOTAL 500 PAIRS) ---
+    const rawWords = {
+        "level1": { // JHS Level 1 (Basic)
+            1: [ // Food (50)
+                ["Apple", "Orange"], ["Milk", "Juice"], ["Beef", "Pork"], ["Cake", "Cookie"], ["Water", "Tea"],
+                ["Rice", "Bread"], ["Banana", "Strawberry"], ["Tomato", "Potato"], ["Carrot", "Onion"], ["Chicken", "Fish"],
+                ["Soup", "Salad"], ["Hamburger", "Pizza"], ["Chocolate", "Candy"], ["Lemon", "Melon"], ["Ice cream", "Pudding"],
+                ["Egg", "Sausage"], ["Sandwich", "Toast"], ["Coffee", "Cocoa"], ["Peach", "Grape"], ["Yogurt", "Milk"],
+                ["Cabbage", "Lettuce"], ["Steak", "Hamburger"], ["Pancake", "Waffle"], ["Curry", "Stew"], ["Bacon", "Ham"],
+                ["Soy sauce", "Ketchup"], ["Green tea", "Black tea"], ["Cola", "Soda"], ["Butter", "Cheese"], ["Sugar", "Salt"],
+                ["Apple", "Banana"], ["Orange", "Grape"], ["Melon", "Strawberry"], ["Rice", "Noodles"], ["Bread", "Sandwich"],
+                ["Pizza", "Pasta"], ["Chicken", "Beef"], ["Pork", "Chicken"], ["Tomato", "Carrot"], ["Onion", "Potato"],
+                ["Juice", "Water"], ["Tea", "Coffee"], ["Cookie", "Chocolate"], ["Cake", "Ice cream"], ["Pudding", "Yogurt"],
+                ["Toast", "Pancake"], ["Waffle", "Cookie"], ["Sausage", "Bacon"], ["Ham", "Egg"], ["Melon", "Peach"]
+            ],
+            2: [ // Sports (50)
+                ["Soccer", "Basketball"], ["Tennis", "Table tennis"], ["Swim", "Run"], ["Baseball", "Golf"], ["Volleyball", "Badminton"],
+                ["Skiing", "Snowboarding"], ["Skating", "Surfing"], ["Judo", "Karate"], ["Catch ball", "Dodgeball"], ["Marathon", "Sprint"],
+                ["High jump", "Long jump"], ["Gymnastics", "Dance"], ["Bowling", "Billiards"], ["Hiking", "Climbing"], ["Baseball", "Softball"],
+                ["Soccer", "Rugby"], ["Basketball", "Volleyball"], ["Tennis", "Badminton"], ["Swim", "Dive"], ["Run", "Walk"],
+                ["Yoga", "Dance"], ["Kendo", "Judo"], ["Karate", "Boxing"], ["Skiing", "Skating"], ["Surfing", "Snowboarding"],
+                ["Table tennis", "Badminton"], ["Golf", "Bowling"], ["Marathon", "Run"], ["Sprint", "Run"], ["Catch ball", "Baseball"],
+                ["Soccer", "Tennis"], ["Basketball", "Baseball"], ["Table tennis", "Volleyball"], ["Swim", "Skiing"], ["Run", "Cycling"],
+                ["Cycling", "Walking"], ["Hiking", "Walking"], ["Climbing", "Hiking"], ["Dance", "Gymnastics"], ["Bowling", "Golf"],
+                ["Judo", "Wrestling"], ["Karate", "Sumo"], ["Kendo", "Fencing"], ["Boxing", "Karate"], ["Rugby", "American football"],
+                ["Softball", "Dodgeball"], ["Figure skating", "Skating"], ["Ice hockey", "Soccer"], ["Badminton", "Volleyball"], ["Golf", "Tennis"]
+            ],
+            3: [ // Animals (50)
+                ["Dog", "Cat"], ["Bird", "Fish"], ["Lion", "Tiger"], ["Bear", "Rabbit"], ["Horse", "Cow"],
+                ["Monkey", "Gorilla"], ["Elephant", "Giraffe"], ["Mouse", "Rat"], ["Pig", "Sheep"], ["Fox", "Wolf"],
+                ["Deer", "Koala"], ["Kangaroo", "Panda"], ["Penguin", "Dolphin"], ["Whale", "Shark"], ["Crocodile", "Snake"],
+                ["Frog", "Turtle"], ["Ant", "Spider"], ["Butterfly", "Bee"], ["Fly", "Mosquito"], ["Owl", "Eagle"],
+                ["Bat", "Crow"], ["Dog", "Wolf"], ["Cat", "Lion"], ["Bird", "Penguin"], ["Fish", "Whale"],
+                ["Tiger", "Cat"], ["Bear", "Panda"], ["Rabbit", "Mouse"], ["Horse", "Zebra"], ["Cow", "Pig"],
+                ["Monkey", "Human"], ["Gorilla", "Monkey"], ["Elephant", "Rhino"], ["Giraffe", "Horse"], ["Mouse", "Rabbit"],
+                ["Pig", "Cow"], ["Sheep", "Goat"], ["Fox", "Dog"], ["Deer", "Horse"], ["Koala", "Panda"],
+                ["Kangaroo", "Rabbit"], ["Dolphin", "Whale"], ["Shark", "Dolphin"], ["Crocodile", "Alligator"], ["Snake", "Lizard"],
+                ["Frog", "Toad"], ["Turtle", "Snake"], ["Ant", "Bee"], ["Butterfly", "Moth"], ["Owl", "Bat"]
+            ],
+            4: [ // School (50)
+                ["Math", "English"], ["Desk", "Chair"], ["Pen", "Pencil"], ["Teacher", "Student"], ["Book", "Notebook"],
+                ["Eraser", "Ruler"], ["Science", "History"], ["Music", "Art"], ["Gym", "Classroom"], ["Blackboard", "Whiteboard"],
+                ["Clock", "Calendar"], ["Bag", "Backpack"], ["Test", "Homework"], ["Dictionary", "Textbook"], ["Uniform", "Clothes"],
+                ["Principal", "Teacher"], ["Library", "Cafeteria"], ["Club", "Team"], ["Chalk", "Marker"], ["Computer", "Tablet"],
+                ["Scissors", "Glue"], ["Paper", "Cardboard"], ["Friend", "Classmate"], ["Pen", "Marker"], ["Pencil", "Eraser"],
+                ["Book", "Dictionary"], ["Notebook", "Textbook"], ["Desk", "Table"], ["Chair", "Sofa"], ["Teacher", "Principal"],
+                ["Student", "Friend"], ["Math", "Science"], ["English", "Japanese"], ["History", "Geography"], ["Art", "Music"],
+                ["Gym", "Library"], ["Classroom", "Staff room"], ["Blackboard", "Chalk"], ["Whiteboard", "Marker"], ["Clock", "Watch"],
+                ["Bag", "Pocket"], ["Test", "Exam"], ["Homework", "Study"], ["Uniform", "Suit"], ["Clothes", "Uniform"],
+                ["Club", "Class"], ["Team", "Group"], ["Computer", "Smartphone"], ["Tablet", "Computer"], ["Scissors", "Knife"]
+            ],
+            5: [ // Places (50)
+                ["Park", "School"], ["Hospital", "Station"], ["Library", "Museum"], ["Pool", "Gym"], ["Store", "Supermarket"],
+                ["Bank", "Post office"], ["Restaurant", "Cafe"], ["Hotel", "House"], ["Apartment", "Mansion"], ["Movie theater", "Concert hall"],
+                ["Police station", "Fire station"], ["Airport", "Bus stop"], ["Zoo", "Aquarium"], ["Beach", "Mountain"], ["River", "Lake"],
+                ["Bridge", "Road"], ["Castle", "Temple"], ["Shrine", "Church"], ["Factory", "Farm"], ["Stadium", "Arena"],
+                ["Park", "Garden"], ["School", "Library"], ["Hospital", "Clinic"], ["Station", "Airport"], ["Museum", "Art gallery"],
+                ["Gym", "Stadium"], ["Store", "Shop"], ["Supermarket", "Market"], ["Bank", "Office"], ["Post office", "Station"],
+                ["Restaurant", "Hotel"], ["Cafe", "Bakery"], ["House", "Apartment"], ["Mansion", "Castle"], ["Movie theater", "Museum"],
+                ["Concert hall", "Stadium"], ["Police station", "Office"], ["Fire station", "Hospital"], ["Bus stop", "Station"], ["Zoo", "Park"],
+                ["Aquarium", "Pool"], ["Beach", "Pool"], ["Mountain", "Forest"], ["River", "Ocean"], ["Lake", "River"],
+                ["Bridge", "Tunnel"], ["Road", "Street"], ["Temple", "Shrine"], ["Church", "Temple"], ["Farm", "Garden"]
+            ]
+        },
+        "level2": { // JHS Level 2 (Standard/Advanced)
+            1: [ // Food (50)
+                ["Garlic", "Ginger"], ["Mayonnaise", "Mustard"], ["Cereal", "Oatmeal"], ["Biscuit", "Cracker"], ["Vinegar", "Oil"],
+                ["Muffin", "Cupcake"], ["Spaghetti", "Macaroni"], ["Spinach", "Broccoli"], ["Mushroom", "Corn"], ["Shrimp", "Crab"],
+                ["Squid", "Octopus"], ["Salmon", "Tuna"], ["Peanut", "Almond"], ["Walnut", "Pecan"], ["Honey", "Jam"],
+                ["Popcorn", "Chips"], ["Omelet", "Scrambled egg"], ["Sausage", "Hot dog"], ["Tofu", "Beans"], ["Peach", "Plum"],
+                ["Pineapple", "Mango"], ["Watermelon", "Melon"], ["Pear", "Apple"], ["Kiwi", "Grape"], ["Blueberry", "Raspberry"],
+                ["Cabbage", "Spinach"], ["Onion", "Garlic"], ["Potato", "Sweet potato"], ["Green pepper", "Carrot"], ["Pumpkin", "Corn"],
+                ["Pork", "Bacon"], ["Beef", "Steak"], ["Chicken", "Turkey"], ["Sushi", "Sashimi"], ["Soup", "Stew"],
+                ["Pasta", "Pizza"], ["Cake", "Pie"], ["Pudding", "Jelly"], ["Cookie", "Biscuit"], ["Chocolate", "Caramel"],
+                ["Vanilla", "Strawberry"], ["Coffee", "Tea"], ["Juice", "Soda"], ["Water", "Milk"], ["Milk", "Yogurt"],
+                ["Cheese", "Butter"], ["Salt", "Pepper"], ["Sugar", "Honey"], ["Soy sauce", "Vinegar"], ["Mustard", "Ketchup"]
+            ],
+            2: [ // Sports (50)
+                ["Athletics", "Gymnastics"], ["Fencing", "Kendo"], ["Archery", "Shooting"], ["Sailing", "Rowing"], ["Triathlon", "Marathon"],
+                ["Wrestling", "Sumo"], ["Boxing", "Kickboxing"], ["Ice hockey", "Figure skating"], ["Rugby", "Soccer"], ["American football", "Rugby"],
+                ["Softball", "Baseball"], ["Water polo", "Swimming"], ["Surfing", "Windsurfing"], ["Snowboarding", "Skiing"], ["Skateboard", "Snowboard"],
+                ["Cycling", "Marathon"], ["Bouldering", "Climbing"], ["Hiking", "Trekking"], ["Scuba diving", "Snorkeling"], ["Yoga", "Pilates"],
+                ["Aerobics", "Dance"], ["Ballet", "Dance"], ["Cheerleading", "Gymnastics"], ["Badminton", "Tennis"], ["Squash", "Tennis"],
+                ["Table tennis", "Tennis"], ["Golf", "Mini golf"], ["Bowling", "Darts"], ["Billiards", "Darts"], ["Judo", "Aikido"],
+                ["Karate", "Taekwondo"], ["Kendo", "Archery"], ["Sprint", "Relay"], ["Hurdles", "Sprint"], ["Long jump", "High jump"],
+                ["Pole vault", "High jump"], ["Shot put", "Javelin"], ["Discus", "Shot put"], ["Gymnastics", "Trampoline"], ["Rhythmic gymnastics", "Ballet"],
+                ["Synchronized swimming", "Swimming"], ["Water polo", "Dodgeball"], ["Rugby", "Basketball"], ["Soccer", "Volleyball"], ["Baseball", "Cricket"],
+                ["Softball", "Cricket"], ["Field hockey", "Ice hockey"], ["Lacrosse", "Soccer"], ["Handball", "Basketball"], ["Dodgeball", "Handball"]
+            ],
+            3: [ // Animals (50)
+                ["Mouse", "Hamster"], ["Sheep", "Alpaca"], ["Zebra", "Horse"], ["Dolphin", "Seal"], ["Shark", "Whale"],
+                ["Eagle", "Hawk"], ["Duck", "Swan"], ["Pigeon", "Crow"], ["Turkey", "Chicken"], ["Ostrich", "Penguin"],
+                ["Frog", "Lizard"], ["Turtle", "Crocodile"], ["Snake", "Worm"], ["Spider", "Scorpion"], ["Ant", "Beetle"],
+                ["Bee", "Wasp"], ["Butterfly", "Dragonfly"], ["Mosquito", "Fly"], ["Snail", "Crab"], ["Octopus", "Squid"],
+                ["Starfish", "Jellyfish"], ["Shell", "Crab"], ["Gorilla", "Chimpanzee"], ["Monkey", "Ape"], ["Tiger", "Leopard"],
+                ["Lion", "Panther"], ["Wolf", "Fox"], ["Bear", "Polar bear"], ["Panda", "Koala"], ["Kangaroo", "Ostrich"],
+                ["Elephant", "Hippo"], ["Rhino", "Hippo"], ["Giraffe", "Camel"], ["Deer", "Sheep"], ["Goat", "Cow"],
+                ["Pig", "Boar"], ["Dog", "Fox"], ["Cat", "Rabbit"], ["Bird", "Bat"], ["Fish", "Eel"],
+                ["Whale", "Dolphin"], ["Seal", "Penguin"], ["Shark", "Crocodile"], ["Turtle", "Frog"], ["Lizard", "Snake"],
+                ["Spider", "Ant"], ["Bee", "Butterfly"], ["Fly", "Spider"], ["Owl", "Pigeon"], ["Crow", "Hawk"]
+            ],
+            4: [ // School (50)
+                ["Geography", "History"], ["Biology", "Chemistry"], ["Physics", "Math"], ["P.E.", "Gym"], ["Social studies", "Science"],
+                ["Literature", "English"], ["Grammar", "Vocabulary"], ["Essay", "Report"], ["Presentation", "Speech"], ["Debate", "Discussion"],
+                ["Experiment", "Observation"], ["Project", "Homework"], ["Quiz", "Test"], ["Midterm", "Final exam"], ["Grade", "Score"],
+                ["Certificate", "Diploma"], ["Graduation", "Entrance ceremony"], ["Semester", "Term"], ["Vacation", "Holiday"], ["Festival", "Event"],
+                ["Field trip", "Excursion"], ["Chorus", "Band"], ["Captain", "Leader"], ["Coach", "Teacher"], ["Senior", "Junior"],
+                ["Volunteer", "Committee"], ["Rule", "Law"], ["Uniform", "Dress code"], ["Locker", "Desk"], ["Hallway", "Stairs"],
+                ["Restroom", "Toilet"], ["Gym", "Pool"], ["Ground", "Court"], ["Lab", "Classroom"], ["Auditorium", "Hall"],
+                ["Office", "Staff room"], ["Nurse", "Doctor"], ["Janitor", "Guard"], ["Chalk", "Eraser"], ["Marker", "Pen"],
+                ["Highlighter", "Pen"], ["Stapler", "Clip"], ["Folder", "File"], ["Compass", "Ruler"], ["Calculator", "Computer"],
+                ["Keyboard", "Mouse"], ["Screen", "Monitor"], ["Projector", "TV"], ["Speaker", "Microphone"], ["Earphones", "Headphones"]
+            ],
+            5: [ // Places (50)
+                ["City", "Town"], ["Village", "Town"], ["Capital", "City"], ["Country", "State"], ["Island", "Continent"],
+                ["Harbor", "Port"], ["Coast", "Beach"], ["Valley", "Mountain"], ["Cave", "Tunnel"], ["Desert", "Forest"],
+                ["Jungle", "Forest"], ["Waterfall", "River"], ["Spring", "Lake"], ["Volcano", "Mountain"], ["Earthquake", "Typhoon"],
+                ["Monument", "Statue"], ["Ruins", "Castle"], ["Tower", "Skyscraper"], ["Building", "Mansion"], ["Embassy", "Office"],
+                ["Court", "Police station"], ["Prison", "Hospital"], ["Clinic", "Pharmacy"], ["Dentist", "Doctor"], ["Bakery", "Butcher"],
+                ["Grocery", "Supermarket"], ["Mall", "Department store"], ["Boutique", "Shop"], ["Barber", "Beauty salon"], ["Laundry", "Cleaners"],
+                ["Bookstore", "Library"], ["Stationery", "Shop"], ["Pet shop", "Zoo"], ["Flower shop", "Garden"], ["Garage", "Parking lot"],
+                ["Gas station", "Bus stop"], ["Subway", "Station"], ["Railway", "Road"], ["Highway", "Street"], ["Intersection", "Corner"],
+                ["Square", "Park"], ["Plaza", "Park"], ["Fountain", "Pool"], ["Playground", "Park"], ["Amusement park", "Theme park"],
+                ["Circus", "Zoo"], ["Theater", "Hall"], ["Studio", "Room"], ["Gym", "Fitness club"], ["Stadium", "Dome"]
+            ]
+        }
+    };
+
+    let availableWords = JSON.parse(JSON.stringify(rawWords));
+
+    const rouletteTasks = [
+        "Tell us your favorite food and why!",
+        "What did you do yesterday? (1 sentence)",
+        "Say something nice about the person to your right!",
+        "Say something nice about the person to your left!",
+        "Say something nice about the person to your front!",
+        "What is your dream job?",
+        "If you have 1 million dollars, what do you buy?",
+        "What is your favorite subject in school? Why?",
+        "Tell us a secret! (In English)",
+        "Act like your Wordwolf word for 3 seconds!",
+        "Who is your favorite YouTuber or celebrity?",
+        "Tell us your favorite movie or anime!",
+        "What country do you want to visit?",
+        "Introduce yourself in English loudly!",
+        "Do 3 jumps while counting in English!",
+        "Make a funny face and say 'I am the Wolf!'"
+    ];
+
+    let totalPlayers = 0;
+    let targetWolves = 1;
+    let currentPlayer = 1;
+    let playerWords = [];
+    let wolfIndexes = [];
+    let majorityWord = "";
+    let minorityWord = "";
+    
+    let timerInterval = null;
+    let timeLeft = 0;
+    let isPaused = false;
+
+    window.onload = function() {
+        updateTopicStats();
+    };
+
+    function updateTopicStats() {
+        let diff = document.getElementById('difficulty').value;
+        let topic = parseInt(document.getElementById('topic').value);
+        let stockDisplay = document.getElementById('stock-status');
+        
+        if (topic === 6) {
+            stockDisplay.innerText = "Available Pairs: Plenty (Random)";
+            return;
+        }
+        let count = availableWords[diff][topic].length;
+        stockDisplay.innerText = `Available Pairs in this category: ${count}`;
+    }
+
+    function updateWolfOptions() {
+        let pCount = parseInt(document.getElementById('players').value);
+        let wolfSelect = document.getElementById('wolves');
+        let currentVal = wolfSelect.value;
+        
+        wolfSelect.innerHTML = '';
+        let option1 = document.createElement('option'); option1.value = "1"; option1.text = "1 Wolf";
+        wolfSelect.appendChild(option1);
+        
+        if (pCount >= 4) {
+            let option2 = document.createElement('option'); option2.value = "2"; option2.text = "2 Wolves";
+            wolfSelect.appendChild(option2);
+        }
+        wolfSelect.value = (pCount >= 4 && currentVal === "2") ? "2" : "1";
+    }
+
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function startGame() {
+        totalPlayers = parseInt(document.getElementById('players').value);
+        targetWolves = parseInt(document.getElementById('wolves').value);
+        let diff = document.getElementById('difficulty').value;
+        let topicChoice = parseInt(document.getElementById('topic').value);
+        timeLeft = parseInt(document.getElementById('duration').value);
+
+        if (totalPlayers === 3 && targetWolves > 1) targetWolves = 1;
+
+        if (topicChoice === 6) {
+            topicChoice = Math.floor(Math.random() * 5) + 1;
+        }
+
+        let list = availableWords[diff][topicChoice];
+        if (list.length === 0) {
+            alert("Wow! You used all words in this category. Resetting the words for this category.");
+            availableWords[diff][topicChoice] = JSON.parse(JSON.stringify(rawWords[diff][topicChoice]));
+            list = availableWords[diff][topicChoice];
+        }
+
+        let randIndex = Math.floor(Math.random() * list.length);
+        let randomPair = list.splice(randIndex, 1)[0]; 
+        updateTopicStats(); 
+
+        if (Math.random() > 0.5) {
+            majorityWord = randomPair[0];
+            minorityWord = randomPair[1];
+        } else {
+            majorityWord = randomPair[1];
+            minorityWord = randomPair[0];
+        }
+
+        wolfIndexes = [];
+        while (wolfIndexes.length < targetWolves) {
+            let r = Math.floor(Math.random() * totalPlayers);
+            if (!wolfIndexes.includes(r)) wolfIndexes.push(r);
+        }
+
+        playerWords = [];
+        for (let i = 0; i < totalPlayers; i++) {
+            playerWords.push(wolfIndexes.includes(i) ? minorityWord : majorityWord);
+        }
+
+        currentPlayer = 1;
+        document.getElementById('player-turn-text').innerText = "Player " + currentPlayer;
+        switchScreen('pass-screen');
+    }
+
+    function showWord() {
+        document.getElementById('player-word-title').innerText = "Player " + currentPlayer + ", your word is:";
+        document.getElementById('the-word').innerText = playerWords[currentPlayer - 1];
+        switchScreen('word-screen');
+    }
+
+    function nextPlayer() {
+        currentPlayer++;
+        if (currentPlayer > totalPlayers) {
+            startDiscussion();
+        } else {
+            document.getElementById('player-turn-text').innerText = "Player " + currentPlayer;
+            switchScreen('pass-screen');
+        }
+    }
+
+    function startDiscussion() {
+        switchScreen('discussion-screen');
+        isPaused = false;
+        document.getElementById('timer').classList.remove('timer-warning');
+        updateTimerDisplay();
+        
+        clearInterval(timerInterval);
+        timerInterval = setInterval(countdown, 1000);
+    }
+
+    function countdown() {
+        if (isPaused) return;
+        timeLeft--;
+        updateTimerDisplay();
+        
+        if (timeLeft <= 10) document.getElementById('timer').classList.add('timer-warning');
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            playAlarmSound();
+            alert("Time is up! Please vote for the Wolf.");
+        }
+    }
+
+    function updateTimerDisplay() {
+        let m = Math.floor(timeLeft / 60);
+        let s = timeLeft % 60;
+        document.getElementById('timer').innerText = (m < 10 ? "0"+m : m) + ":" + (s < 10 ? "0"+s : s);
+    }
+
+    function toggleTimer() {
+        isPaused = !isPaused;
+    }
+
+    function playAlarmSound() {
+        try {
+            let ctx = new (window.AudioContext || window.webkitAudioContext)();
+            let now = ctx.currentTime;
+            for (let i = 0; i < 3; i++) {
+                let osc = ctx.createOscillator();
+                let gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, now + i * 0.4);
+                gain.gain.setValueAtTime(0, now + i * 0.4);
+                gain.gain.linearRampToValueAtTime(0.6, now + i * 0.4 + 0.05);
+                gain.gain.linearRampToValueAtTime(0, now + i * 0.4 + 0.25);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now + i * 0.4);
+                osc.stop(now + i * 0.4 + 0.3);
+            }
+        } catch (e) { console.log(e); }
+    }
+
+    function confirmResult() {
+        clearInterval(timerInterval);
+        showResult();
+    }
+
+    function showResult() {
+        let wolfNames = wolfIndexes.map(i => "Player " + (i + 1)).join(" & ");
+        document.getElementById('wolf-result').innerText = (wolfIndexes.length > 1 ? "The Wolves are: " : "The Wolf is: ") + wolfNames + "!";
+        document.getElementById('majority-result').innerText = majorityWord;
+        document.getElementById('minority-result').innerText = minorityWord;
+        
+        document.getElementById('roulette-result').innerText = "Ready to spin?";
+        
+        switchScreen('result-screen');
+    }
+
+    function spinRoulette() {
+        let rBox = document.getElementById('roulette-result');
+        let count = 0;
+        let spinInterval = setInterval(() => {
+            rBox.innerText = rouletteTasks[Math.floor(Math.random() * rouletteTasks.length)];
+            count++;
+            if (count > 15) {
+                clearInterval(spinInterval);
+                let finalTask = rouletteTasks[Math.floor(Math.random() * rouletteTasks.length)];
+                rBox.innerHTML = "<span style='color:#e65100;'>★ " + finalTask + " ★</span>";
+            }
+        }, 50);
+    }
+
+    function resetGame() {
+        clearInterval(timerInterval);
+        switchScreen('setup-screen');
+        updateTopicStats();
+    }
+</script>
+
+</body>
+</html>
